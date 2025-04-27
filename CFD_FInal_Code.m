@@ -21,12 +21,13 @@ uselessAOARange=[-1,0];% Removing the AoA between -2.8 and -1.2
 % because the lift generated is too low causing our glider to fall vertically
 
 %Energy calculation
-P1 = 1.2; %ambient power draw from electronics (not including actuators) [W]
-PandRPC1=71928; %Pitch and Roll Energy per dive and rise [Ws]
+P1 = 0.8; %ambient power draw from electronics (not including actuators) [W]
+PandRPC1=19.2+0.34; %Pitch and Roll power [W]
+EtaPandR=0.001;
 PressureSurface = 1e5; %Atmospheric pressure at water surface
 PressureBottom = 21e5; %Water pressure at maximum depth
 EtaBE = 0.35; %buoyancy engine efficiency - our estimate
-BatteryE = 1512*3600 ; %total battery capacity in joules - our estimate:
+BatteryE = 1575*3600 ; %total battery capacity in joules - our estimate:
 % 1512 [Wh] * 3600 [s/h]
 
 %4D slicer
@@ -200,8 +201,8 @@ NB_in_litres = [NB_in_litres(1:LB-1,:);NB_in_litres(UB:end,:)];
 checkAOA0 = find(UsefullAOA==0);
 %% Graph stage
 % Specifying the domain and range for the plots (x and y values)
-generalYlim=[0,0.2];
-generalXlim=[0,1];
+generalYlim=[0,0.15];
+generalXlim=[0,0.5];
 generalXlim2=[-1,0];
 
 F1P2start = 0; %To adjust the starting point for the 5 polar curves on figure 1 and 8,
@@ -224,22 +225,22 @@ PNB=[];
 
 for i=1:length(NB)
 plot(U_NBandAOA(LB:end,i),W_NBandAOA(LB:end,i))
-STRNB2=append('NetB=',num2str(NB(i)),'N');
+STRNB2=append('NB=',num2str(NB(i)),'N');
 Leg{i}=STRNB2;
 end
 
 istart=LB+F1P2start;
 for i=istart:istart+5% Here can chane for the amount of AOA lines needed
 plot([0,U_NBandAOA(i,:)],[0,W_NBandAOA(i,:)],'--')
-STRAOA2=append('AOA=',num2str(UsefullAOA(i)),'deg');
+STRAOA2=append('AoA=',num2str(UsefullAOA(i)),'^\circ');
 Leg{i-istart+1+length(NB)}=STRAOA2;% Continue the Legend after the part1
 end
 
 %legend(Leg,'NumColumns',1,'Location','bestoutside','Box','off')
 legend(Leg,'NumColumns',1,'Location','northwest','Box','off')
-title('Glide polar for dive')
-ylabel('Vertical Velocity w m/s')
-xlabel('Horizontal Velocity u m/s')
+title('Glide polar when diving')
+ylabel('Vertical Velocity [m/s]')
+xlabel('Horizontal Velocity [m/s]')
 %%
 figure(2)
 hold on
@@ -341,21 +342,21 @@ PNB=[];
 
 for i=1:length(NB)
 plot(-U_NBandAOA(1:LB-1,i),W_NBandAOA(1:LB-1,i))
-STRNB2=append('NetB=',num2str(NB(i)),'N');
+STRNB2=append('NB=',num2str(NB(i)),'N');
 Leg8{i}=STRNB2;
 end
 
 istart=1+F1P2start;
 for i=LB-istart-5:LB-istart
 plot([0,-U_NBandAOA(i,:)],[0,W_NBandAOA(i,:)],'--')
-STRAOA2=append('AOA=',num2str(UsefullAOA(i)),'deg');
+STRAOA2=append('AoA=',num2str(UsefullAOA(i)),'^\circ');
 Leg8{i-(LB-istart-5)+1+length(NB)}=STRAOA2;
 end
 %legend(Leg,'NumColumns',1,'Location','bestoutside','Box','off')
 legend(Leg8,'NumColumns',1,'Location','northwest','Box','off')
-title('Glide polar for rise')
-ylabel('Vertical Velocity w m/s')
-xlabel('Horizontal Velocity u m/s')
+title('Glide polar for rising')
+ylabel('Vertical Velocity [m/s]')
+xlabel('Horizontal Velocity [m/s]')
 %%
 figure(9)
 hold on
@@ -475,7 +476,7 @@ for iAXE=1:length(AOAN)
     tempDPL = tempDPC./Total_NB;
     tempTPC = TPC_AOAP_NB + fliplr(TPC_AOAN_NB(iAXE,:));
     AXE_AOAP_AOAN_NB3DMatrix(:,iAXE,:) = tempAXE;
-    TotalE_AOAP_AOAN_NB3DMatrix(:,iAXE,:) = tempAXE + BE_E + PandRPC1;
+    TotalE_AOAP_AOAN_NB3DMatrix(:,iAXE,:) = tempAXE + BE_E + PandRPC1.*tempTPC*EtaPandR;
     DPC_AOAP_AOAN_NB3DMatrix(:,iAXE,:) = tempDPC;
     DPL_AOAP_AOAN_NB3DMatrix(:,iAXE,:) = tempDPL;
     TPC_AOAP_AOAN_NB3DMatrix(:,iAXE,:) = tempTPC;
@@ -570,20 +571,20 @@ figure(22)
 hold on
 contourf(AOAN,AOAP,TotalD_AOAP_AOAN_NB3DMatrix(:,:,SliceControler))
 c22=colorbar;
-c22.Label.String='Total Distant per battery charge km';
-title(append('Total Distant 4D contourplot section on NB=',num2str(NB(SliceControler)),'N for dive'))
-xlabel('AOAN for rise alphaN deg')
-ylabel('AOAP for dive alphaP deg')
+c22.Label.String='Total Distance Travelled [km]';
+title(append('Total Distant Travelled for NB=',num2str(NB(SliceControler)),'N when diving'))
+xlabel('AOA when rising [degrees]')
+ylabel('AOA when diving [degrees]')
 %%
 %This is a key section view graph that need to notice
 figure(23)
 hold on
 contourf(AOAN,AOAP,TotalTime_AOAP_AOAN_NB3DMatrix(:,:,SliceControler))
 c23=colorbar;
-c23.Label.String='Total Time per battery charge week';
-title(append('Total Time 4D contourplot section on NB=',num2str(NB(SliceControler)),'N for dive'))
-xlabel('AOAN for rise alphaN deg')
-ylabel('AOAP for dive alphaP deg')
+c23.Label.String='Mission duration [weeks]';
+title(append('Total Mission Time for NB=',num2str(NB(SliceControler)),'N when diving'))
+xlabel('AOA when rising [degrees]')
+ylabel('AOA when diving [degrees]')
 %%
 figure(24)
 hold on
@@ -617,10 +618,10 @@ figure(27)
 hold on
 contourf(AOAN,AOAP,DPL_AOAP_AOAN_NB3DMatrix(:,:,SliceControler))
 c27=colorbar;
-c27.Label.String='Distance per Cycles every Liter change m/L';
-title(append('DPL 4D contourplot section on NB=',num2str(NB(SliceControler)),'N for dive'))
-xlabel('AOAN for rise alphaN deg')
-ylabel('AOAP for dive alphaP deg')
+c27.Label.String='Distance Travelled per cycle divided by displaced VBD volume  [m/L]';
+title(append('Efficiency for NB=',num2str(NB(SliceControler)),'N for diving'))
+xlabel('AOA when rising [degrees]')
+ylabel('AOA when diving [degrees]')
 %%
 % figure(17);
 % cmap = parula(256);
